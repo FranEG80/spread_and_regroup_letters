@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Desaparecer Texto</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #000;
+            color: #fff;
+            font-family: sans-serif;
+            text-align: center;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #texto {
+            position: relative;
+            font-size: 2vw;
+            line-height: 1.5;
+        }
+
+        .char {
+            position: relative;
+            opacity: 1;
+            visibility: visible;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="texto-container">
+        <p id="texto">
+            Lorem ipsum dolor sit amet consectetur adipisicing elit. Magnam, incidunt labore, cupiditate numquam cumque,
+            in quas iure dicta unde velit aut.
+            Voluptas suscipit explicabo voluptates. Harum asperiores voluptatum enim molestiae! Lorem, ipsum dolor sit
+            amet consectetur adipisicing elit.
+            Officia error sequi recusandae animi non iure, a beatae nesciunt quasi consequatur totam ad magnam aliquam
+            delectus quod dolore minima.
+            Suscipit, beatae. Lorem ipsum dolor sit amet consectetur adipisicing elit.
+            Tenetur earum possimus vitae laboriosam fugit deserunt quibusdam eaque sapiente vero numquam perferendis et
+            qui aliquid fuga at aspernatur, veritatis facere quaerat?
+        </p>
+        <button id="disappear" onclick="hacerDesaparecer()">Hazme desaparecer</button>
+        <button id="appear" onclick="reiniciarTexto()" disabled>Reiniciar texto</button>
+    </div>
+
+
+    <script>
+
+        let originalText = '';
+        const measures = []
+
+        function hacerDesaparecer() {
+            document.querySelector('#disappear').disabled = true
+
+            setTimeout(() => {
+                const texto = document.getElementById('texto');
+                const textoContainer = document.getElementById('texto-container');
+                const caracteres = texto.innerText.split('');
+                let maxTime = 0
+
+
+                originalText = texto.innerText;
+                texto.innerText = '';
+
+                caracteres.forEach((char) => {
+                    const span = document.createElement('span');
+                    span.className = 'char';
+                    span.innerText = char;
+                    texto.appendChild(span);
+                });
+
+                const spans = document.querySelectorAll('.char');
+
+                spans.forEach(span => {
+                    const { x, y, width, height } = span.getBoundingClientRect();
+                    const { offsetLeft, offsetTop, scrollTop, scrollLeft } = span
+
+                    measures.push({
+                        x, y, width, height,
+                        offsetTop, offsetLeft, scrollLeft, scrollTop
+                    })
+                })
+
+                spans.forEach((span, i) => {
+                    const rect = span.getBoundingClientRect();
+                    const measure = measures[i]
+                    $new = span.cloneNode(true)
+                    $new.classList = 'hidden-char'
+                    $new.style.color = 'transparent'
+                    span.before($new)
+                    span.style.position = 'fixed';
+                    span.style.width = `${measure.width}px`
+                    span.style.height = `${measure.height}px`
+                    measures[i].top = measure.y - 5 + 'px'
+                    measures[i].left = measure.x + 'px'
+                    span.style.top = measures[i].top
+                    span.style.left = measures[i].left
+                    const randomX = Math.floor(Math.random() * (window.innerWidth - rect.width));
+                    const randomY = Math.floor(Math.random() * (window.innerHeight - rect.height));
+                    const distanceToTop = rect.top;
+                    const distanceToLeft = rect.left;
+                    const distanceToBottom = window.innerHeight - rect.bottom;
+                    const distanceToRight = window.innerWidth - rect.right;
+                    let toTop = 0;
+                    let toLeft = 0;
+                    const tiempo = Math.random() * 5;
+
+                    if (distanceToTop < (window.innerHeight / 2 - rect.height)) {
+                        toTop = (Math.floor(Math.random() * rect.y))
+                        if (toTop < 0) toTop = 0
+                        toTop += 'px'
+                    } else {
+                        toTop = (Math.floor(Math.random() * (window.innerHeight - rect.height)) + rect.top)
+                        if (toTop < 0) toTop = 0
+                        toTop += 'px'
+                    }
+
+                    if (distanceToLeft < (window.innerWidth / 2 - rect.width)) {
+                        toLeft = (Math.floor(Math.random() * rect.x))
+                        if (toLeft < 0) toLeft = 0
+                        toLeft += 'px'
+                    } else {
+                        toLeft = (Math.floor(Math.random() * (window.innerWidth - rect.width)) + rect.left)
+                        if (toLeft < 0) toLeft = 0
+                        toLeft += 'px'
+                    }
+
+                    const time = Math.floor((Math.random() * 30)) / 10
+                    const timeDelay = Math.floor((Math.random() * 20)) / 10
+                    if (maxTime < time + timeDelay) maxTime = time + timeDelay
+                    span.style.opacity = 1
+                    span.style.transition = `
+                        opacity ${time}s ease ${timeDelay}s, 
+                        top ${time}s ease ${timeDelay}s, 
+                        left ${time}s ease ${timeDelay}s
+                    `
+
+                    setTimeout(() => {
+                        span.style.top = `${toTop}`;
+                        span.style.left = `${toLeft}`;
+                        span.style.opacity = 0
+                    }, 50)
+
+                });
+                setTimeout(() => document.querySelector('#appear').disabled = false, maxTime * 1000)
+            }, 50)
+        }
+
+        function reiniciarTexto() {
+            document.querySelector('#appear').disabled = true
+
+            setTimeout(() => {
+                const texto = document.getElementById('texto');
+                const spans = document.querySelectorAll('.char');
+                const delete_spans = document.querySelectorAll('.delete-char');
+
+                let maxTime = 0
+
+                spans.forEach((span, i) => {
+                    const time = Math.floor((Math.random() * 30)) / 10
+                    const timeDelay = Math.floor((Math.random() * 20)) / 10
+
+                    if (maxTime < time + timeDelay) maxTime = time + timeDelay
+
+                    span.style.top = measures[i].top
+                    span.style.left = measures[i].left
+                    span.style.opacity = 1
+                })
+
+                setTimeout(() => {
+                    texto.innerText = originalText;
+                    document.querySelector('#appear').disabled = true
+                    document.querySelector('#disappear').disabled = false
+                }, maxTime * 1000)
+            }, 50)
+        }
+    </script>
+
+</body>
+
+</html>
